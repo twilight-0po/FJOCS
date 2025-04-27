@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>메뉴 관리</title>
+</head>
+<body>
+  <h1>🛠️ 관리자 - 메뉴 관리</h1>
+
+  <h2>📋 현재 메뉴 목록</h2>
+  <ul id="menu-list">
+    <li>불러오는 중...</li>
+  </ul>
+
+  <h2>➕ 메뉴 추가하기</h2>
+  <form id="add-menu-form">
+    <label>메뉴 이름:</label><br>
+    <input type="text" id="menu-name" required><br><br>
+
+    <label>가격 (₩):</label><br>
+    <input type="number" id="menu-price" required><br><br>
+
+    <button type="submit">추가</button>
+  </form>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getFirestore, collection, doc, onSnapshot, getDocs, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB5fNlZwwqhutBm-iGGR4SX3HPUY6PR1cU",
+    authDomain: "fjocs-57418.firebaseapp.com",
+    projectId: "fjocs-57418",
+    storageBucket: "fjocs-57418.firebasestorage.app",
+    messagingSenderId: "1025344233506",
+    appId: "1:1025344233506:web:edcf50e049f8b4ce18aa7b",
+    measurementId: "G-059R0SJRLJ"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+
+    const menusRef = collection(db, "menus");
+    const menuList = document.getElementById('menu-list');
+    const addForm = document.getElementById('add-menu-form');
+
+    async function loadMenus() {
+      menuList.innerHTML = "";
+      const snapshot = await getDocs(menusRef);
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const li = document.createElement('li');
+        li.innerHTML = `
+          ${data.name} (₩${data.price})
+          <button onclick="deleteMenu('${docSnap.id}')">삭제</button>
+          <button onclick="editMenu('${docSnap.id}', '${data.name}', ${data.price})">수정</button>
+        `;
+        menuList.appendChild(li);
+      });
+    }
+
+    // 메뉴 추가
+    addForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('menu-name').value;
+      const price = Number(document.getElementById('menu-price').value);
+
+      await addDoc(menusRef, { name, price });
+      alert('메뉴가 추가되었습니다!');
+      addForm.reset();
+      loadMenus();
+    });
+
+    // 메뉴 삭제
+    window.deleteMenu = async (id) => {
+      if (confirm("정말 삭제하시겠습니까?")) {
+        await deleteDoc(doc(db, "menus", id));
+        alert('삭제 완료!');
+        loadMenus();
+      }
+    };
+
+    // 메뉴 수정
+    window.editMenu = async (id, oldName, oldPrice) => {
+      const newName = prompt("새 메뉴 이름을 입력하세요:", oldName);
+      const newPrice = prompt("새 가격을 입력하세요:", oldPrice);
+
+      if (newName && newPrice) {
+        await updateDoc(doc(db, "menus", id), {
+          name: newName,
+          price: Number(newPrice)
+        });
+        alert('수정 완료!');
+        loadMenus();
+      }
+    };
+
+    loadMenus();
+  </script>
+
+</body>
+</html>

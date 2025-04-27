@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>주문 현황</title>
+</head>
+<body>
+  <h1>📋 주문 현황 (테이블 {{ table_number }}번)</h1>
+
+  <div id="order-status">
+    <p><strong>주문 시간:</strong> <span id="timestamp">불러오는 중...</span></p>
+    <p><strong>주문 상태:</strong> <span id="status">불러오는 중...</span></p>
+
+    <h2>🍽️ 주문한 메뉴</h2>
+    <ul id="menu-list">
+      <li>불러오는 중...</li>
+    </ul>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getFirestore, collection, doc, onSnapshot, getDocs, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB5fNlZwwqhutBm-iGGR4SX3HPUY6PR1cU",
+    authDomain: "fjocs-57418.firebaseapp.com",
+    projectId: "fjocs-57418",
+    storageBucket: "fjocs-57418.firebasestorage.app",
+    messagingSenderId: "1025344233506",
+    appId: "1:1025344233506:web:edcf50e049f8b4ce18aa7b",
+    measurementId: "G-059R0SJRLJ"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+
+    // 🔥 Flask 변수를 JS로 넘길 때 안전하게 변환
+    const tableNumber = document.body.dataset.tableNumber; 
+    const orderRef = doc(db, "orders", `table_${tableNumber}`);
+
+    onSnapshot(orderRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        document.getElementById('timestamp').textContent = new Date(data.timestamp).toLocaleString();
+        document.getElementById('status').textContent = data.status;
+
+        const menuList = document.getElementById('menu-list');
+        menuList.innerHTML = ''; // 기존 내용 비우기
+        data.items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.menu} (${item.quantity}개)`;
+          menuList.appendChild(li);
+        });
+      } else {
+        document.getElementById('order-status').innerHTML = "<p>현재 주문이 없습니다.</p>";
+      }
+    });
+  </script>
+
+</body>
+</html>

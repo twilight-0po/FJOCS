@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>주방 주문 관리</title>
+</head>
+<body>
+  <h1>🍳 주방 주문 관리</h1>
+
+  <div id="orders">
+    <p>주문을 불러오는 중...</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getFirestore, collection, doc, onSnapshot, getDocs, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB5fNlZwwqhutBm-iGGR4SX3HPUY6PR1cU",
+    authDomain: "fjocs-57418.firebaseapp.com",
+    projectId: "fjocs-57418",
+    storageBucket: "fjocs-57418.firebasestorage.app",
+    messagingSenderId: "1025344233506",
+    appId: "1:1025344233506:web:edcf50e049f8b4ce18aa7b",
+    measurementId: "G-059R0SJRLJ"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+
+    const ordersRef = collection(db, "orders");
+
+    onSnapshot(ordersRef, (snapshot) => {
+      const ordersDiv = document.getElementById('orders');
+      ordersDiv.innerHTML = ''; // 기존 내용 비우기
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        
+        const orderDiv = document.createElement('div');
+        orderDiv.style.border = "1px solid black";
+        orderDiv.style.padding = "10px";
+        orderDiv.style.marginBottom = "10px";
+
+        orderDiv.innerHTML = `
+  <h3>테이블 번호: ${data.tableNumber}</h3>
+  <p><strong>현재 상태:</strong> ${data.status}</p>
+  <ul>
+    ${data.items.map(item => `<li>${item.menu} (${item.quantity}개)</li>`).join('')}
+  </ul>
+  <button onclick="updateStatus('${docSnap.id}', '조리 중')">조리 중으로 변경</button>
+  <button onclick="updateStatus('${docSnap.id}', '서빙 완료')">서빙 완료로 변경</button>
+  <button onclick="resetTable(${data.tableNumber})">테이블 리셋</button>
+`;
+
+
+        ordersDiv.appendChild(orderDiv);
+      });
+    });
+
+    window.updateStatus = async (docId, newStatus) => {
+      const orderDoc = doc(db, "orders", docId);
+      await updateDoc(orderDoc, { status: newStatus });
+      alert(`상태를 '${newStatus}'로 변경했습니다!`);
+    };
+    window.resetTable = async (tableNumber) => {
+  if (confirm(`${tableNumber}번 테이블 주문을 리셋하시겠습니까?`)) {
+    await fetch(`/reset-table/${tableNumber}`, { method: 'POST' });
+    alert('정산 완료되었습니다!');
+    location.reload(); // 페이지 새로고침
+  }
+};
+
+  </script>
+
+</body>
+</html>

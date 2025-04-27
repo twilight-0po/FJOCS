@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>총무 매출 관리</title>
+</head>
+<body>
+  <h1>💵 총무 - 매출 관리</h1>
+
+  <table border="1" cellpadding="10" cellspacing="0">
+    <thead>
+      <tr>
+        <th>테이블 번호</th>
+        <th>주문 총액</th>
+        <th>상세보기</th>
+      </tr>
+    </thead>
+    <tbody id="table-body">
+      <!-- 여기 주문 테이블 목록 들어옴 -->
+    </tbody>
+    <tfoot>
+      <tr>
+        <td><strong>총 합계</strong></td>
+        <td id="total-sales"><strong>₩0</strong></td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, doc, onSnapshot, getDocs, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      // 🔥 여기에 Firebase 설정 넣을 것
+      apiKey: "AIzaSyB5fNlZwwqhutBm-iGGR4SX3HPUY6PR1cU",
+    authDomain: "fjocs-57418.firebaseapp.com",
+    projectId: "fjocs-57418",
+    storageBucket: "fjocs-57418.firebasestorage.app",
+    messagingSenderId: "1025344233506",
+    appId: "1:1025344233506:web:edcf50e049f8b4ce18aa7b",
+    measurementId: "G-059R0SJRLJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function loadAccounting() {
+      const ordersRef = collection(db, "orders");
+      const snapshot = await getDocs(ordersRef);
+
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      let totalSales = 0;
+
+      const docs = [];
+      snapshot.forEach(docSnap => {
+        docs.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      // 테이블 번호순 정렬
+      docs.sort((a, b) => a.tableNumber - b.tableNumber);
+
+      for (const order of docs) {
+        const totalPrice = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        totalSales += totalPrice;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${order.tableNumber}번</td>
+          <td>₩${totalPrice.toLocaleString()}</td>
+          <td><button onclick="toggleDetail('${order.id}')">상세보기</button></td>
+          <td>
+  <button onclick="toggleDetail('${order.id}')">상세보기</button>
+  <button onclick="resetTable(${order.tableNumber})">리셋</button>
+</td>
+
+        `;
+
+        tbody.appendChild(tr);
+
+        // 상세보기용 숨겨진 행
+        const detailTr = document.createElement('tr');
+        detailTr.id = `detail-${order.id}`;
+        detailTr.style.display = 'none'; // 기본 숨김
+        detailTr.innerHTML = `
+          <td colspan="3">
+            <ul>
+              ${order.items.map(item => `<li>${item.menu} (${item.quantity}개) - ₩${(item.price * item.quantity).toLocaleString()}</li>`).join('')}
+            </ul>
+          </td>
+        `;
+
+        tbody.appendChild(detailTr);
+      }
+
+      document.getElementById('total-sales').innerHTML = `<strong>₩${totalSales.toLocaleString()}</strong>`;
+    }
+
+    window.toggleDetail = (id) => {
+      const detailRow = document.getElementById(`detail-${id}`);
+      if (detailRow.style.display === 'none') {
+        detailRow.style.display = '';
+      } else {
+        detailRow.style.display = 'none';
+      }
+    };
+
+    loadAccounting();
+
+    window.resetTable = async (tableNumber) => {
+  if (confirm(`${tableNumber}번 테이블 주문을 리셋하시겠습니까?`)) {
+    await fetch(`/reset-table/${tableNumber}`, { method: 'POST' });
+    alert('정산 완료되었습니다!');
+    location.reload(); // 페이지 새로고침
+  }
+};
+
+  </script>
+
+</body>
+</html>

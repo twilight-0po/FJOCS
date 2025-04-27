@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>메뉴 주문하기</title>
+</head>
+<body>
+  <h1>🍽️ 메뉴 주문하기</h1>
+
+  <form action="/order" method="post">
+    <label for="tableNumber">테이블 번호:</label><br>
+    <input type="number" id="tableNumber" name="tableNumber" required><br><br>
+
+    <fieldset>
+      <legend>메뉴 선택 (복수 선택 가능)</legend>
+      <input type="checkbox" name="menu" value="김치찌개"> 김치찌개 (₩8,000)<br>
+      <input type="checkbox" name="menu" value="된장찌개"> 된장찌개 (₩7,000)<br>
+      <input type="checkbox" name="menu" value="제육볶음"> 제육볶음 (₩9,000)<br>
+    </fieldset><br>
+
+    <label for="request">요청사항 (선택):</label><br>
+    <input type="text" id="request" name="request"><br><br>
+
+    <button type="submit">주문하기</button>
+  </form>
+
+</body>
+</html>
